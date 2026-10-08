@@ -143,22 +143,22 @@
 
   /* 모·두·의·공·모 캐릭터 (럭키드로우와 같은 친구들) */
   .critters { display: flex; justify-content: center; align-items: flex-end; gap: 4px; margin: 0 0 16px; }
-  .critters img { height: 54px; width: auto; transform-origin: 50% 100%; animation: hop 1.8s ease-in-out infinite; animation-delay: calc(var(--i) * 0.16s); }
+  .critters img { height: 40px; width: auto; transform-origin: 50% 100%; animation: hop 1.8s ease-in-out infinite; animation-delay: calc(var(--i) * 0.16s); }
   @keyframes hop {
     0%, 55%, 100% { transform: translateY(0) rotate(0); }
-    20% { transform: translateY(-14px) rotate(-6deg); }
+    20% { transform: translateY(-10px) rotate(-6deg); }
     35% { transform: translateY(0) rotate(3deg); }
   }
-  .critters.run img { height: 46px; animation: run .5s ease-in-out infinite; animation-delay: calc(var(--i) * 0.1s); }
+  .critters.run img { height: 34px; animation: run .5s ease-in-out infinite; animation-delay: calc(var(--i) * 0.1s); }
   @keyframes run {
     0%, 100% { transform: translateY(0) rotate(-4deg); }
     50% { transform: translateY(-8px) rotate(4deg); }
   }
-  .critters.cheer img { height: 58px; animation: cheer .8s cubic-bezier(.3,0,.4,1) infinite; animation-delay: calc(var(--i) * 0.1s); }
+  .critters.cheer img { height: 44px; animation: cheer .8s cubic-bezier(.3,0,.4,1) infinite; animation-delay: calc(var(--i) * 0.1s); }
   @keyframes cheer {
     0%, 100% { transform: translateY(0) scale(1, 1); }
     15% { transform: translateY(0) scale(1.08, .9); }
-    50% { transform: translateY(-22px) scale(.95, 1.06); }
+    50% { transform: translateY(-16px) scale(.95, 1.06); }
   }
   @media (prefers-reduced-motion: reduce) { .critters img { animation: none !important; } }
 

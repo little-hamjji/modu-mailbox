@@ -71,18 +71,16 @@
   /* 선정 상품 안내 (제목 바로 아래 가운데) */
   #gift-note {
     position: fixed;
-    top: clamp(78px, 7.5vw, 104px);
+    top: clamp(72px, 6.6vw, 94px);
     left: 50%;
     transform: translateX(-50%);
     white-space: nowrap;
     z-index: 10;
     font-family: 'Jua', sans-serif;
-    font-size: clamp(15px, 1.15vw, 20px);
-    color: #5a3b00;
-    background: linear-gradient(135deg, rgba(255, 236, 160, 0.95), rgba(255, 200, 80, 0.95));
-    padding: 8px 18px;
-    border-radius: 999px;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+    font-size: clamp(12px, 0.85vw, 15px);
+    color: rgba(255,255,255,0.92);
+    text-shadow: 0 2px 8px rgba(0,0,0,0.35);   /* 배경 띠 없이 제목처럼 그림자로만 읽히게 */
+    letter-spacing: 0.3px;
     pointer-events: none;
   }
   .letter-gift {
@@ -388,7 +386,7 @@
   var POLL_INTERVAL_MS = 8000;
   var SELECTED_SCALE = 1.15;
   var CRITTER_SRC = ["img/c1.png", "img/c2.png", "img/c3.png", "img/c4.png", "img/c5.png"];   // 모·두·의·공·모
-  function critH() { return Math.round(Math.min(120, Math.max(70, window.innerHeight * 0.11))); }
+  function critH() { return Math.round(Math.min(85, Math.max(52, window.innerHeight * 0.08))); }
   var BOTTOM_PAD = 40 + critH();
 
   // 메모 바탕색(bg)과 같은 계열의 진한 글자색(deep) — 팝업 편지지가 메모 색을 따라간다
