@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>모두의 우체통 메모패드</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg1: #2b1055;
+    --bg2: #7597de;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: linear-gradient(135deg, var(--bg1), var(--bg2), #ff6fb5, #ffd36f);
+    background-size: 400% 400%;
+    animation: gradientShift 25s ease infinite;
+    font-family: 'Gowun Dodum', sans-serif;
+  }
+  @keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  #header {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 28px 0 10px 0;
+    z-index: 10;
+    pointer-events: none;
+  }
+  #header h1 {
+    font-family: 'Jua', sans-serif;
+    color: #ffffff;
+    font-size: clamp(28px, 3.2vw, 52px);
+    text-shadow: 0 4px 18px rgba(0,0,0,0.35);
+    letter-spacing: 1px;
+  }
+  #liveDot {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: #4dff88;
+    box-shadow: 0 0 12px 4px rgba(77,255,136,0.7);
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+  }
+  #count {
+    position: fixed;
+    bottom: 18px;
+    right: 24px;
+    color: rgba(255,255,255,0.85);
+    font-size: 16px;
+    font-family: 'Gowun Dodum', sans-serif;
+    z-index: 10;
+    background: rgba(0,0,0,0.25);
+    padding: 6px 14px;
+    border-radius: 20px;
+  }
+
+  #stage {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+  }
+
+  .balloon-wrap {
+    position: absolute;
+    top: 0;
+    left: 0;
+    will-change: transform;
+    cursor: pointer;
+  }
+
+  .balloon {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    text-align: center;
+    width: 100%;
+    border-radius: 26px;
+    padding: 16px 20px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.25), inset 0 2px 6px rgba(255,255,255,0.5);
+    font-family: 'Gowun Dodum', sans-serif;
+    font-weight: 700;
+    color: #3a2a1a;
+    line-height: 1.35;
+    word-break: keep-all;
+    user-select: none;
+    box-sizing: border-box;
+    transform-origin: center;
+    opacity: 0;
+    animation: popIn 0.5s cubic-bezier(.34,1.56,.64,1) forwards;
+    transition: background .4s, box-shadow .4s, color .4s;
+  }
+  @keyframes popIn {
+    0%   { opacity: 0; transform: scale(0.2) rotate(-8deg); }
+    70%  { opacity: 1; transform: scale(1.08) rotate(2deg); }
+    100% { opacity: 1; transform: scale(1) rotate(0deg); }
+  }
+  /* 메모 안의 세 줄: 기관명 / 요약 1줄 / 작성자 */
+  .balloon .org { font-size: 0.68em; opacity: 0.72; }
+  .balloon .summary { font-size: 1em; }
+  .balloon .name { font-size: 0.66em; opacity: 0.72; }
+
+  /* 선발된 메모: 글래스모피즘 + 빛나는 테두리 + 🏆 배지 */
+  .balloon.selected {
+    background: rgba(255, 255, 255, 0.2) !important;
+    backdrop-filter: blur(14px) saturate(160%);
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
+    border: 2px solid rgba(255, 255, 255, 0.75);
+    color: #ffffff;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.35);
+    animation: popIn 0.5s cubic-bezier(.34,1.56,.64,1) forwards, glow 2.4s ease-in-out infinite;
+  }
+  @keyframes glow {
+    0%, 100% { box-shadow: 0 0 14px 2px rgba(255, 236, 140, 0.55), 0 10px 25px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.6); }
+    50%      { box-shadow: 0 0 34px 10px rgba(255, 236, 140, 0.9), 0 10px 25px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.6); }
+  }
+  .balloon.selected .org, .balloon.selected .name { opacity: 0.92; }
+  .badge {
+    display: none;
+    position: absolute;
+    top: -14px; right: -10px;
+    font-family: 'Jua', sans-serif;
+    font-size: 15px;
+    color: #5a3b00;
+    background: linear-gradient(135deg, #ffe58a, #ffc23d);
+    padding: 4px 10px;
+    border-radius: 999px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    text-shadow: none;
+  }
+  .balloon.selected .badge { display: block; }
+
+  #empty {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255,255,255,0.75);
+    font-family: 'Jua', sans-serif;
+    font-size: clamp(20px, 2.2vw, 32px);
+    text-align: center;
+    padding: 0 20px;
+    z-index: 2;
+  }
+
+  /* 메모 클릭 시 뜨는 팝업 */
+  #modal {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(20, 10, 40, 0.45);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .25s;
+  }
+  #modal.open { opacity: 1; pointer-events: auto; }
+  /* 편지지: 메모 색(--memo-bg)과 같은 계열의 진한 색(--memo-deep)으로 꾸민다 */
+  .letter {
+    --memo-bg: #E4D6FF;
+    --memo-deep: #6A3FC2;
+    position: relative;
+    width: min(760px, 92vw);
+    max-height: 86vh;
+    display: flex;
+    flex-direction: column;
+    background: #fffdf7;
+    border-radius: 30px;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.35);
+    color: #3a2a1a;
+    overflow: hidden;
+    transform: scale(.85) translateY(30px) rotate(-2deg);
+    transition: transform .4s cubic-bezier(.34,1.56,.64,1);
+  }
+  #modal.open .letter { transform: none; }
+
+  /* 위쪽: 메모 색 띠 + 항공우편 줄무늬 + 우표 */
+  .letter-head {
+    position: relative;
+    flex-shrink: 0;
+    padding: 34px 160px 30px 48px;
+    background-color: var(--memo-bg);
+    background-image: radial-gradient(rgba(255,255,255,0.55) 1.5px, transparent 1.5px);
+    background-size: 16px 16px;
+  }
+  .letter-head::after {
+    content: "";
+    position: absolute; left: 0; right: 0; bottom: 0; height: 10px;
+    background: repeating-linear-gradient(135deg, var(--memo-deep) 0 14px, #fffdf7 14px 22px, #ff8a7a 22px 36px, #fffdf7 36px 44px);
+    opacity: .85;
+  }
+  .letter-org {
+    display: inline-block;
+    font-family: 'Jua', sans-serif;
+    font-size: clamp(20px, 1.8vw, 27px);
+    color: var(--memo-deep);
+    background: rgba(255,255,255,0.85);
+    border: 2px solid var(--memo-deep);
+    padding: 4px 16px;
+    border-radius: 999px;
+    margin-bottom: 14px;
+  }
+  .letter-summary {
+    font-family: 'Jua', sans-serif;
+    font-size: clamp(28px, 2.7vw, 42px);
+    line-height: 1.3;
+    word-break: keep-all;
+  }
+  .stamp {
+    position: absolute;
+    top: 30px; right: 76px;
+    width: 76px; height: 90px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+    background: #fffdf7;
+    border: 3px dashed var(--memo-deep);
+    border-radius: 6px;
+    transform: rotate(6deg);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+  }
+  .stamp-icon { font-size: 34px; line-height: 1; }
+  .stamp-text { font-family: 'Jua', sans-serif; font-size: 11px; color: var(--memo-deep); letter-spacing: -0.3px; }
+
+  /* 본문: 메모 색으로 줄이 그어진 편지지 */
+  .letter-body { padding: 30px 48px 28px; overflow-y: auto; }
+  .letter-message {
+    font-size: clamp(20px, 1.7vw, 27px);
+    line-height: 2;
+    white-space: pre-wrap;
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+    padding: 0 6px 0 26px;
+    border-left: 4px solid var(--memo-bg);
+    background-image: linear-gradient(transparent calc(2em - 2px), var(--memo-bg) calc(2em - 2px), var(--memo-bg) 2em);
+    background-size: 100% 2em;
+  }
+  .letter-foot {
+    display: flex; align-items: center; justify-content: flex-end; gap: 18px;
+    margin-top: 22px;
+  }
+  .postmark {
+    width: 76px; height: 76px;
+    border: 2px solid var(--memo-deep);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; text-align: center;
+    font-family: 'Jua', sans-serif; font-size: 11px; line-height: 1.35;
+    color: var(--memo-deep);
+    opacity: .55;
+    transform: rotate(-14deg);
+  }
+  .letter-from { text-align: right; }
+  .letter-from small { display: block; font-size: 15px; color: #8a7b6c; }
+  .letter-name { font-family: 'Jua', sans-serif; font-size: clamp(24px, 2vw, 32px); color: var(--memo-deep); }
+
+  .letter-close {
+    position: absolute;
+    top: 18px; right: 18px;
+    z-index: 2;
+    width: 44px; height: 44px;
+    border: 0; border-radius: 50%;
+    background: rgba(255,255,255,0.85);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    font-size: 20px; color: #3a2a1a;
+    cursor: pointer;
+  }
+  .letter-close:hover { background: #fff; }
+
+  /* 선발된 편지: 금빛 테두리 + 위쪽 리본 */
+  .letter-badge {
+    display: none;
+    position: absolute;
+    top: 0; left: 48px;
+    font-family: 'Jua', sans-serif;
+    font-size: 17px;
+    color: #5a3b00;
+    background: linear-gradient(135deg, #ffe58a, #ffc23d);
+    padding: 6px 16px 8px;
+    border-radius: 0 0 14px 14px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  }
+  .letter.selected { box-shadow: 0 0 0 5px #ffd36f, 0 0 60px 10px rgba(255, 211, 111, 0.55), 0 30px 80px rgba(0,0,0,0.35); }
+  .letter.selected .letter-badge { display: block; }
+  .letter.selected .letter-head { padding-top: 54px; }
+</style>
+</head>
+<body>
+
+  <div id="header">
+    <div id="liveDot"></div>
+    <h1>💌 모두의 우체통</h1>
+  </div>
+
+  <div id="stage">
+    <div id="empty">첫 편지를 기다리고 있어요...</div>
+  </div>
+
+  <div id="count">0통의 편지</div>
+
+  <div id="modal" aria-hidden="true">
+    <div class="letter" role="dialog" aria-modal="true" aria-labelledby="letter-summary">
+      <button class="letter-close" id="letter-close" type="button" aria-label="닫기">✕</button>
+      <div class="letter-head">
+        <div class="letter-badge">🏆 선발된 편지</div>
+        <div class="letter-org" id="letter-org"></div>
+        <div class="letter-summary" id="letter-summary"></div>
+        <div class="stamp" aria-hidden="true"><span class="stamp-icon">💌</span><span class="stamp-text">모두의 우체통</span></div>
+      </div>
+      <div class="letter-body">
+        <div class="letter-message" id="letter-message"></div>
+        <div class="letter-foot">
+          <div class="postmark" aria-hidden="true">모두의공모<br>2026<br>성과공유회</div>
+          <div class="letter-from"><small>From.</small><span class="letter-name" id="letter-name"></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // ====== 설정 ======
+  var APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzzAuAOovxFOGidV326_R8fIcDWq-b3LWTP1gp75ayVrRGQ2SNrdEzqgCncxGrmX1qa/exec";
+  var POLL_INTERVAL_MS = 8000;
+  var SELECTED_SCALE = 1.15;
+
+  // 메모 바탕색(bg)과 같은 계열의 진한 글자색(deep) — 팝업 편지지가 메모 색을 따라간다
+  var PALETTE = [
+    { bg: "#FFD9E3", deep: "#C2185B" }, { bg: "#FFF3C4", deep: "#A67C00" },
+    { bg: "#C9F2D8", deep: "#2E7D4F" }, { bg: "#C7E8FF", deep: "#1F6FB2" },
+    { bg: "#E4D6FF", deep: "#6A3FC2" }, { bg: "#FFE0C2", deep: "#C2601A" },
+    { bg: "#D4FFEA", deep: "#1F8A66" }, { bg: "#D9E7FF", deep: "#3B5BB5" }
+  ];
+
+  var stage = document.getElementById("stage");
+  var emptyMsg = document.getElementById("empty");
+  var countEl = document.getElementById("count");
+  var modal = document.getElementById("modal");
+
+  var balloons = [];   // {id, data, wrap, el, homeX, homeY, w, h, ...}
+  var byId = {};
+  var colorIndex = 0;
+  var openId = null;
+
+  function rand(min, max) { return Math.random() * (max - min) + min; }
+
+  function pickHome(w, h, padX, padY) {
+    var W = window.innerWidth, H = window.innerHeight;
+    var minX = padX, maxX = Math.max(minX, W - w - padX);
+    var minY = 130 + padY, maxY = Math.max(minY, H - h - 40 - padY);
+    var best = null, bestScore = -1;
+    var tries = balloons.length === 0 ? 1 : 30;
+    for (var a = 0; a < tries; a++) {
+      var x = rand(minX, maxX);
+      var y = rand(minY, maxY);
+      var minDist = Infinity;
+      for (var i = 0; i < balloons.length; i++) {
+        var ob = balloons[i];
+        var dx = (x + w / 2) - (ob.homeX + ob.w / 2);
+        var dy = (y + h / 2) - (ob.homeY + ob.h / 2);
+        var d = Math.sqrt(dx * dx + dy * dy);
+        if (d < minDist) minDist = d;
+      }
+      if (minDist > bestScore) { bestScore = minDist; best = { x: x, y: y }; }
+    }
+    return best || { x: rand(minX, maxX), y: rand(minY, maxY) };
+  }
+
+  // 요약 길이에 맞춰 크기를 정하고, 선발된 메모는 1.15배로 키운다
+  function sizeBalloon(b) {
+    var len = Math.max(b.data.summary.length, b.data.org.length * 0.7);
+    var fontSize = len > 22 ? 17 : len > 14 ? 19 : 22;
+    var width = Math.min(340, Math.max(170, len * (fontSize * 0.62) + 48));
+    if (b.data.selected) { fontSize *= SELECTED_SCALE; width *= SELECTED_SCALE; }
+    b.wrap.style.width = width + "px";
+    b.el.style.fontSize = fontSize + "px";
+    b.w = width;
+    b.h = b.wrap.offsetHeight || 100;
+    // 커진 만큼 화면 밖으로 나가지 않게 보정
+    var W = window.innerWidth, H = window.innerHeight;
+    b.homeX = Math.min(b.homeX, Math.max(b.ampX + 24, W - b.w - b.ampX - 24));
+    b.homeY = Math.min(b.homeY, Math.max(130 + b.ampY + 24, H - b.h - 40 - b.ampY - 24));
+  }
+
+  function fillBalloon(b) {
+    b.orgEl.textContent = b.data.org;
+    b.summaryEl.textContent = b.data.summary;
+    b.nameEl.textContent = "— " + b.data.name;
+    b.el.classList.toggle("selected", !!b.data.selected);
+    b.wrap.style.zIndex = String(b.data.selected ? 500 + b.order : 2 + b.order);
+  }
+
+  function addBalloon(data) {
+    if (emptyMsg) { emptyMsg.remove(); emptyMsg = null; }
+
+    // 바깥 wrap: JS가 위치(translate)만 담당
+    var wrap = document.createElement("div");
+    wrap.className = "balloon-wrap";
+
+    // 안쪽 el: CSS가 팝업 애니메이션(scale/rotate)만 담당
+    var el = document.createElement("div");
+    el.className = "balloon";
+    var color = PALETTE[colorIndex++ % PALETTE.length];
+    el.style.background = color.bg;
+
+    var badge = document.createElement("span");
+    badge.className = "badge";
+    badge.textContent = "🏆 선발";
+    var orgEl = document.createElement("div"); orgEl.className = "org";
+    var summaryEl = document.createElement("div"); summaryEl.className = "summary";
+    var nameEl = document.createElement("div"); nameEl.className = "name";
+    el.appendChild(badge); el.appendChild(orgEl); el.appendChild(summaryEl); el.appendChild(nameEl);
+    wrap.appendChild(el);
+
+    var b = {
+      id: data.id, data: data, wrap: wrap, el: el, color: color,
+      orgEl: orgEl, summaryEl: summaryEl, nameEl: nameEl,
+      order: balloons.length,
+      homeX: 0, homeY: 0, w: 0, h: 0,
+      ampX: rand(16, 30),
+      ampY: rand(16, 28),
+      periodX: rand(3000, 5200),
+      periodY: rand(2600, 4400),
+      rotAmp: rand(3, 6),
+      rotPeriod: rand(3400, 5800),
+      phase: rand(0, Math.PI * 2)
+    };
+    fillBalloon(b);
+
+    wrap.style.visibility = "hidden";
+    stage.appendChild(wrap);
+    sizeBalloon(b);
+    var pos = pickHome(b.w, b.h, b.ampX + 24, b.ampY + 24);
+    b.homeX = pos.x; b.homeY = pos.y;
+    wrap.style.visibility = "";
+
+    wrap.addEventListener("click", function () { openLetter(b.id); });
+    balloons.push(b);
+    byId[b.id] = b;
+  }
+
+  // 시트에서 요약을 고치거나 선발 체크를 바꾸면 이미 떠 있는 메모에도 반영한다
+  function updateBalloon(b, data) {
+    var sizeChanged = b.data.summary !== data.summary || b.data.org !== data.org || !!b.data.selected !== !!data.selected;
+    b.data = data;
+    fillBalloon(b);
+    if (sizeChanged) sizeBalloon(b);
+    if (openId === b.id) renderLetter(b.data, b.color);
+  }
+
+  function removeBalloon(b) {
+    b.wrap.remove();
+    balloons.splice(balloons.indexOf(b), 1);
+    delete byId[b.id];
+    if (openId === b.id) closeLetter();
+  }
+
+  function syncMessages(messages) {
+    var seen = {};
+    messages.forEach(function (m) {
+      seen[m.id] = true;
+      if (byId[m.id]) updateBalloon(byId[m.id], m);
+      else addBalloon(m);
+    });
+    // 시트에서 화면표시 N 처리되거나 지워진 편지는 화면에서도 내린다
+    balloons.slice().forEach(function (b) { if (!seen[b.id]) removeBalloon(b); });
+    countEl.textContent = balloons.length + "통의 편지";
+  }
+
+  function tick(t) {
+    for (var i = 0; i < balloons.length; i++) {
+      var b = balloons[i];
+      var ox = Math.sin(t / b.periodX + b.phase) * b.ampX;
+      var oy = Math.sin(t / b.periodY + b.phase * 1.7) * b.ampY;
+      var rot = Math.sin(t / b.rotPeriod + b.phase * 0.6) * b.rotAmp;
+      b.wrap.style.transform =
+        "translate(" + (b.homeX + ox) + "px," + (b.homeY + oy) + "px) rotate(" + rot + "deg)";
+    }
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+
+  // ====== 팝업: 메모를 누르면 편지 전문을 크게 보여준다 ======
+  function renderLetter(d, color) {
+    var letter = document.querySelector("#modal .letter");
+    letter.classList.toggle("selected", !!d.selected);
+    letter.style.setProperty("--memo-bg", color.bg);
+    letter.style.setProperty("--memo-deep", color.deep);
+    document.getElementById("letter-org").textContent = d.org;
+    document.getElementById("letter-summary").textContent = d.summary;
+    document.getElementById("letter-message").textContent = d.message;
+    document.getElementById("letter-name").textContent = d.name;
+  }
+  function openLetter(id) {
+    var b = byId[id];
+    if (!b) return;
+    openId = id;
+    renderLetter(b.data, b.color);
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+    modal.querySelector(".letter-body").scrollTop = 0;
+  }
+  function closeLetter() {
+    openId = null;
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden", "true");
+  }
+  document.getElementById("letter-close").addEventListener("click", closeLetter);
+  modal.addEventListener("click", function (e) { if (e.target === modal) closeLetter(); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeLetter(); });
+
+  // ====== JSONP 방식으로 데이터 가져오기 (CORS 우회) ======
+  var fetching = false;
+  function fetchMessages() {
+    if (fetching) return;   // 응답이 늦을 때 요청이 겹치지 않게
+    fetching = true;
+    var cbName = "jsonp_cb_" + Date.now();
+    var script = document.createElement("script");
+    var timer = setTimeout(function () { cleanup(); }, 15000);
+
+    function cleanup() {
+      clearTimeout(timer);
+      window[cbName] = function () {};   // 늦게 도착한 응답이 오류를 내지 않게
+      script.remove();
+      fetching = false;
+    }
+
+    window[cbName] = function (data) {
+      cleanup();
+      try {
+        if (data && data.messages) syncMessages(data.messages);
+        else if (data && data.error) console.error("서버 오류:", data.error);
+      } catch (err) {
+        console.error("메시지 처리 오류:", err);
+      }
+    };
+
+    script.onerror = function () {
+      console.error("데이터를 불러오지 못했습니다. URL 또는 접근 권한을 확인하세요.");
+      cleanup();
+    };
+
+    script.src = APPS_SCRIPT_URL + "?action=messages&callback=" + cbName + "&_=" + Date.now();
+    document.body.appendChild(script);
+  }
+
+  fetchMessages();
+  setInterval(fetchMessages, POLL_INTERVAL_MS);
+
+  window.addEventListener("resize", function () {
+    // 창 크기 변경 시 화면 밖으로 나가지 않도록 위치 보정
+    balloons.forEach(sizeBalloon);
+  });
+</script>
+</body>
+</html>

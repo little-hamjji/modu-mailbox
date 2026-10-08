@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#C8463D" />
+<title>💌 모두의 우체통 · 모두의공모</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+  :root {
+    --red: #C8463D;
+    --red-dark: #9E3029;
+    --paper: #FFFDF7;
+    --bg: #F6EFE2;
+    --ink: #3A2E25;
+    --muted: #8A7B6C;
+    --line: #E6DCCB;
+    --green: #4F8A5B;
+    --blue: #3F6FB5;
+    --stamp: #F2C14E;
+    --shadow: 0 16px 40px rgba(90, 60, 30, 0.14);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { min-height: 100%; }
+  body {
+    background: var(--bg);
+    background-image: radial-gradient(rgba(200, 70, 61, 0.06) 1px, transparent 1px);
+    background-size: 18px 18px;
+    color: var(--ink);
+    font-family: 'Pretendard Variable', Pretendard, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    line-height: 1.6;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .wrap { max-width: 480px; margin: 0 auto; padding: 28px 16px 48px; }
+
+  .screen { display: none; animation: fadeUp .45s ease both; }
+  .screen.active { display: block; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+  /* 편지지 카드: 위쪽 항공우편 줄무늬 */
+  .letter {
+    position: relative;
+    background: var(--paper);
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+    padding: 34px 22px 26px;
+    overflow: hidden;
+  }
+  .letter::before {
+    content: "";
+    position: absolute; top: 0; left: 0; right: 0; height: 8px;
+    background: repeating-linear-gradient(135deg, var(--red) 0 14px, var(--paper) 14px 22px, #3F6FB5 22px 36px, var(--paper) 36px 44px);
+  }
+
+  .eyebrow {
+    display: inline-block;
+    font-size: 13px; color: var(--red-dark);
+    background: #FBE9E4; border-radius: 999px; padding: 4px 12px; margin-bottom: 14px;
+  }
+  h1 { font-weight: 800; font-size: 32px; line-height: 1.25; letter-spacing: -0.02em; margin-bottom: 6px; }
+  .sub { font-weight: 700; font-size: 17px; color: var(--red); margin-bottom: 18px; }
+  .intro p { margin-bottom: 12px; font-size: 15.5px; word-break: keep-all; }
+  .intro .hint { color: var(--muted); font-size: 14.5px; }
+
+  /* 우체통 일러스트 */
+  .postbox { display: flex; justify-content: center; margin: 4px 0 18px; }
+  .postbox svg { width: 112px; height: auto; }
+
+  .btn {
+    display: block; width: 100%;
+    border: 0; border-radius: 14px;
+    padding: 16px 18px; margin-top: 18px;
+    font-family: inherit; font-weight: 700; font-size: 18px;
+    color: #fff; background: var(--red);
+    box-shadow: 0 6px 0 var(--red-dark);
+    cursor: pointer; transition: transform .08s, box-shadow .08s, opacity .2s;
+  }
+  .btn:active { transform: translateY(3px); box-shadow: 0 3px 0 var(--red-dark); }
+  .btn:disabled { opacity: .45; cursor: default; transform: none; box-shadow: 0 6px 0 var(--red-dark); }
+  .btn.ghost { background: transparent; color: var(--red-dark); box-shadow: none; border: 1.5px solid var(--line); font-size: 16px; }
+
+  /* 입력 폼 */
+  .field { margin-bottom: 20px; }
+  .field label { display: block; font-weight: 700; font-size: 16px; margin-bottom: 8px; word-break: keep-all; }
+  .field label b { color: var(--blue); }
+  .req { color: var(--red); font-size: 13px; margin-left: 4px; }
+  .field .help { color: var(--muted); font-size: 13.5px; margin: -4px 0 8px; word-break: keep-all; }
+  select, input[type=text], textarea {
+    width: 100%;
+    font-family: inherit; font-size: 16px; color: var(--ink);
+    background: #fff; border: 1.5px solid var(--line); border-radius: 12px;
+    padding: 13px 14px; outline: none; transition: border-color .15s;
+    -webkit-appearance: none; appearance: none;
+  }
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%238A7B6C' stroke-width='2'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px;
+  }
+  select:focus, input:focus, textarea:focus { border-color: var(--red); }
+  /* 줄 공책 느낌의 메시지 칸 */
+  textarea {
+    min-height: 168px; resize: vertical; line-height: 28px;
+    background-color: #fff;
+    background-image: linear-gradient(transparent 27px, #F1E7D6 28px);
+    background-size: 100% 28px; background-attachment: local;
+    padding-top: 6px;
+  }
+  .counter { text-align: right; font-size: 12.5px; color: var(--muted); margin-top: 4px; }
+  .counter.over { color: var(--red); }
+  .status { min-height: 22px; font-size: 14px; color: var(--red); margin-top: 10px; text-align: center; word-break: keep-all; }
+  .status.info { color: var(--green); }
+  .notice { font-size: 13px; color: var(--muted); text-align: center; margin-top: 14px; word-break: keep-all; }
+
+  /* 전송 애니메이션: 봉투가 우체통 투입구로 */
+  .sending { text-align: center; padding: 40px 0 10px; }
+  .sending .envelope { font-size: 64px; display: inline-block; animation: post 1.4s ease-in-out infinite; }
+  @keyframes post {
+    0% { transform: translateY(0) rotate(-6deg); opacity: 1; }
+    60% { transform: translateY(26px) rotate(0) scale(.85); opacity: 1; }
+    100% { transform: translateY(46px) scale(.5); opacity: 0; }
+  }
+  .sending p { font-weight: 700; font-size: 17px; color: var(--muted); margin-top: 18px; }
+
+  /* 완료 */
+  .done { text-align: center; }
+  .done .stamp {
+    width: 92px; height: 92px; margin: 6px auto 18px;
+    border-radius: 50%; border: 3px dashed var(--red);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 42px; transform: rotate(-10deg);
+    animation: stampIn .5s cubic-bezier(.34,1.56,.64,1) both;
+  }
+  @keyframes stampIn { from { transform: scale(2.2) rotate(-25deg); opacity: 0; } to { transform: scale(1) rotate(-10deg); opacity: 1; } }
+  .done h2 { font-weight: 800; font-size: 24px; letter-spacing: -0.02em; margin-bottom: 12px; word-break: keep-all; }
+  .done p { font-size: 15.5px; word-break: keep-all; }
+  .done .sign { margin-top: 18px; color: var(--muted); font-size: 14px; }
+  .preview {
+    margin: 22px 0 4px; padding: 16px; text-align: left;
+    background: #FFF7E8; border: 1px dashed var(--line); border-radius: 12px;
+    font-size: 15px; white-space: pre-wrap; word-break: break-word;
+  }
+  .preview .from { display: block; margin-top: 10px; text-align: right; color: var(--muted); font-size: 13.5px; }
+
+  .footer { text-align: center; color: var(--muted); font-size: 12.5px; margin-top: 22px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- 1. 인트로 -->
+  <section id="intro-screen" class="screen active" aria-labelledby="intro-title">
+    <div class="letter">
+      <div class="postbox" aria-hidden="true">
+        <svg viewBox="0 0 120 150">
+          <rect x="22" y="22" width="76" height="96" rx="38" fill="#C8463D"/>
+          <rect x="22" y="60" width="76" height="58" fill="#C8463D"/>
+          <rect x="38" y="52" width="44" height="8" rx="4" fill="#5A1E1A"/>
+          <rect x="36" y="76" width="48" height="26" rx="5" fill="#FFFDF7"/>
+          <text x="60" y="94" text-anchor="middle" font-size="13" fill="#C8463D" font-family="sans-serif">♥</text>
+          <rect x="54" y="118" width="12" height="26" fill="#7A5A44"/>
+          <rect x="40" y="142" width="40" height="6" rx="3" fill="#7A5A44"/>
+          <g transform="translate(66 6) rotate(18)">
+            <rect width="34" height="24" rx="3" fill="#FFFDF7" stroke="#E6DCCB" stroke-width="1.5"/>
+            <path d="M1 2l16 12L33 2" fill="none" stroke="#C8463D" stroke-width="2"/>
+          </g>
+        </svg>
+      </div>
+      <span class="eyebrow">「모두의공모」 성과공유회 워크숍</span>
+      <h1 id="intro-title">💌 모두의 우체통</h1>
+      <div class="sub">함께한 1년, 서로에게 보내는 응원</div>
+      <div class="intro">
+        <p>처음 사업계획서에 담았던 마음이 누군가의 일상을 바꾸는 작은 실천이 되기까지, 각자의 자리에서 애써주신 여러분께 감사드립니다.</p>
+        <p>계획대로 흘러가 기뻤던 날도, 생각처럼 되지 않아 고민했던 날도 있었겠지요. 그 모든 날을 지나 여기까지 와주셔서 고맙습니다.</p>
+        <p>「모두의공모」 1차년도를 마무리하며, 잠시 실적과 숫자 대신 우리의 마음을 나누려고 합니다.</p>
+        <p>함께 달려온 우리 기관에, 그리고 어딘가에서 비슷한 고민을 했을 동료 기관에 짧은 응원 한 통을 남겨주세요.</p>
+        <p class="hint">멋진 문장이 아니어도 괜찮아요.<br>“고생 많았어요”, “덕분에 힘이 났어요” 한마디면 충분합니다. 🌷</p>
+      </div>
+      <button class="btn" id="start-btn" type="button">편지 쓰러 가기 ✍️</button>
+    </div>
+  </section>
+
+  <!-- 2. 편지 쓰기 -->
+  <section id="write-screen" class="screen" aria-labelledby="write-title">
+    <div class="letter">
+      <span class="eyebrow" id="write-title">💌 편지 쓰기</span>
+
+      <div class="field">
+        <label for="org-input">🏡 1. <b>어느 기관</b>에서 편지를 보내주시나요?<span class="req">*</span></label>
+        <input type="text" id="org-input" maxlength="40" placeholder="예) 함께일하는재단" autocomplete="organization" />
+      </div>
+
+      <div class="field">
+        <label for="name-input">✍️ 2. 메시지를 남기는 분의 <b>성함</b>을 적어주세요.<span class="req">*</span></label>
+        <input type="text" id="name-input" maxlength="20" placeholder="예) 홍길동" autocomplete="name" />
+      </div>
+
+      <div class="field">
+        <label for="message-input">💌 3. 함께한 우리에게 보내는 한마디<span class="req">*</span></label>
+        <p class="help">어떤 이야기든 괜찮아요. 지난 1년을 함께한 우리에게 감사와 응원의 마음을 전해주세요.</p>
+        <textarea id="message-input" placeholder="예) “각자의 자리에서 애쓴 우리 모두, 정말 고생 많았어요!”"></textarea>
+        <div class="counter" id="counter">0 / 500</div>
+      </div>
+
+      <button class="btn" id="send-btn" type="button" disabled>우체통에 넣기 📮</button>
+      <div class="status" id="status" role="alert"></div>
+      <p class="notice">보내주신 기관명·성함·메시지는 성과공유회 워크숍 현장 화면에 소개될 수 있어요.</p>
+    </div>
+  </section>
+
+  <!-- 3. 전송 중 -->
+  <section id="sending-screen" class="screen" aria-live="polite">
+    <div class="letter sending">
+      <div class="envelope" aria-hidden="true">✉️</div>
+      <p>편지를 우체통에 넣고 있어요...</p>
+    </div>
+  </section>
+
+  <!-- 4. 완료 -->
+  <section id="done-screen" class="screen" aria-live="polite">
+    <div class="letter done">
+      <div class="stamp" aria-hidden="true">💌</div>
+      <h2>따뜻한 마음이 도착했어요!</h2>
+      <p>함께해주셔서 고맙습니다.<br>여러분의 다음 걸음도 응원할게요. 🌱</p>
+      <div class="preview" id="preview"></div>
+      <p class="sign">— 「모두의공모」 사무국 드림 —</p>
+      <button class="btn ghost" id="again-btn" type="button">한 통 더 쓰기</button>
+    </div>
+  </section>
+
+  <p class="footer">함께일하는재단 · 「모두의공모」 사무국</p>
+</div>
+
+<script>
+  // ====== 설정 ======
+  // Apps Script 웹앱 배포 URL을 붙여넣어 주세요. (Code.gs 배포 후 /exec 로 끝나는 주소)
+  var APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzzAuAOovxFOGidV326_R8fIcDWq-b3LWTP1gp75ayVrRGQ2SNrdEzqgCncxGrmX1qa/exec";
+  var MAX_LEN = 500;
+  var DRAFT_KEY = "modu_mailbox_draft_v1";
+  var OUTBOX_KEY = "modu_mailbox_outbox_v1";
+
+  var screens = {
+    intro: document.getElementById("intro-screen"),
+    write: document.getElementById("write-screen"),
+    sending: document.getElementById("sending-screen"),
+    done: document.getElementById("done-screen")
+  };
+  var orgInput = document.getElementById("org-input");
+  var nameInput = document.getElementById("name-input");
+  var messageInput = document.getElementById("message-input");
+  var counter = document.getElementById("counter");
+  var sendBtn = document.getElementById("send-btn");
+  var statusEl = document.getElementById("status");
+  var sending = false;
+
+  function showScreen(name) {
+    Object.keys(screens).forEach(function (k) { screens[k].classList.remove("active"); });
+    screens[name].classList.add("active");
+    try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch (_) { window.scrollTo(0, 0); }
+  }
+
+  // ====== 저장소: 사파리 사생활 보호 모드 등에서 막혀도 페이지는 동작하도록 감싼다 ======
+  function storeGet(key, fallback) {
+    try {
+      var v = JSON.parse(window.localStorage.getItem(key));
+      return v == null ? fallback : v;
+    } catch (_) { return fallback; }
+  }
+  function storeSet(key, value) {
+    try { window.localStorage.setItem(key, JSON.stringify(value)); } catch (_) {}
+  }
+
+  function newLetterId() {
+    try { if (window.crypto && crypto.randomUUID) return crypto.randomUUID(); } catch (_) {}
+    return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10);
+  }
+
+  function getOrg() {
+    return orgInput.value.trim();
+  }
+
+  // ====== 임시저장: 새로고침·카톡 창 닫힘에도 쓰던 글을 잃지 않게 ======
+  function saveDraft() {
+    storeSet(DRAFT_KEY, { org: orgInput.value, name: nameInput.value, message: messageInput.value });
+  }
+
+  function restoreDraft() {
+    var d = storeGet(DRAFT_KEY, null);
+    if (d) {
+      // 예전 버전(목록 선택)의 임시저장도 살린다
+      if (!orgInput.value) orgInput.value = d.org || d.orgOther || "";
+      if (!nameInput.value) nameInput.value = d.name || "";
+      if (!messageInput.value) messageInput.value = d.message || "";
+    }
+    updateSendState();
+  }
+
+  function updateSendState() {
+    var len = messageInput.value.length;
+    counter.textContent = len + " / " + MAX_LEN;
+    counter.classList.toggle("over", len > MAX_LEN);
+    sendBtn.disabled = sending || !getOrg() || !nameInput.value.trim() ||
+      !messageInput.value.trim() || len > MAX_LEN;
+  }
+
+  // ====== 전송: text/plain POST로 preflight 없이 Apps Script에 보낸다 ======
+  async function postOnce(letter) {
+    var res = await fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(letter)
+    });
+    var raw = await res.text();
+    var data = null;
+    try { data = JSON.parse(raw); } catch (_) { data = null; }
+    if (res.ok && data && data.status === "ok") return { ok: true };
+    var reason;
+    if (data && data.message) reason = data.message;
+    else if (/<html|<!doctype/i.test(raw)) reason = "서버 접근 권한 설정 확인 필요";   // 배포 권한이 '모든 사용자'가 아니면 로그인 페이지가 돌아온다
+    else reason = "HTTP " + res.status;
+    return { ok: false, reason: reason, fatal: !!(data && data.status === "error") };
+  }
+
+  // 콜드 스타트·혼잡에 대비해 점점 길게 기다리며 최대 3번 시도한다.
+  async function postWithRetry(letter) {
+    var delays = [0, 1200, 2500];
+    var last = { ok: false, reason: "" };
+    for (var i = 0; i < delays.length; i++) {
+      if (delays[i]) await new Promise(function (r) { setTimeout(r, delays[i]); });
+      try {
+        last = await postOnce(letter);
+      } catch (err) {
+        last = { ok: false, reason: "네트워크 연결 확인 필요" };
+      }
+      if (last.ok || last.fatal) return last;   // 입력값 오류는 재시도해도 같으므로 멈춘다
+    }
+    return last;
+  }
+
+  // ====== 보낼 편지함: 전송 전에 먼저 폰에 보관 → 성공하면 지운다 ======
+  function outboxAdd(letter) {
+    var box = storeGet(OUTBOX_KEY, []);
+    if (!box.some(function (l) { return l.id === letter.id; })) box.push(letter);
+    storeSet(OUTBOX_KEY, box);
+  }
+  function outboxRemove(id) {
+    storeSet(OUTBOX_KEY, storeGet(OUTBOX_KEY, []).filter(function (l) { return l.id !== id; }));
+  }
+
+  // 지난번에 못 보낸 편지가 있으면 조용히 다시 보낸다 (같은 편지번호는 서버가 중복 저장하지 않음)
+  async function flushOutbox() {
+    if (!APPS_SCRIPT_URL) return;
+    var box = storeGet(OUTBOX_KEY, []);
+    for (var i = 0; i < box.length; i++) {
+      var r = await postWithRetry(box[i]);
+      if (r.ok || r.fatal) outboxRemove(box[i].id);
+    }
+  }
+
+  async function send() {
+    if (sendBtn.disabled) return;
+    statusEl.textContent = "";
+    statusEl.className = "status";
+    if (!APPS_SCRIPT_URL) {
+      statusEl.textContent = "전송 기능이 아직 연결되지 않았어요. 사무국에 알려주세요.";
+      return;
+    }
+    // 실패 후 같은 내용을 다시 누르면 같은 편지번호를 써서 서버에서 중복 저장되지 않게 한다
+    var pending = storeGet(OUTBOX_KEY, []).filter(function (l) {
+      return l.org === getOrg() && l.name === nameInput.value.trim() && l.message === messageInput.value.trim();
+    })[0];
+    var letter = {
+      id: pending ? pending.id : newLetterId(),
+      org: getOrg(),
+      name: nameInput.value.trim(),
+      message: messageInput.value.trim(),
+      submittedAt: new Date().toISOString()
+    };
+    sending = true;
+    updateSendState();
+    outboxAdd(letter);
+    showScreen("sending");
+
+    var started = Date.now();
+    var result = await postWithRetry(letter);
+    // 애니메이션이 한 번은 보이도록 최소 1.4초 유지
+    var wait = 1400 - (Date.now() - started);
+    if (wait > 0) await new Promise(function (r) { setTimeout(r, wait); });
+
+    sending = false;
+    if (result.ok) {
+      outboxRemove(letter.id);
+      messageInput.value = "";
+      saveDraft();   // 기관·성함은 남겨 '한 통 더 쓰기'가 편하도록
+      var preview = document.getElementById("preview");
+      preview.textContent = letter.message;
+      var from = document.createElement("span");
+      from.className = "from";
+      from.textContent = "From. " + letter.org + " " + letter.name;
+      preview.appendChild(from);
+      showScreen("done");
+    } else {
+      if (result.fatal) outboxRemove(letter.id);
+      showScreen("write");
+      statusEl.textContent = result.fatal
+        ? "보낼 수 없는 내용이에요. (" + result.reason + ")"
+        : "전송이 늦어지고 있어요. 편지는 이 폰에 보관해 두었으니 버튼을 한 번 더 눌러주세요. (" + result.reason + ")";
+      updateSendState();
+    }
+  }
+
+  function writeAgain() {
+    statusEl.textContent = "";
+    updateSendState();
+    showScreen("write");
+    messageInput.focus();
+  }
+
+  document.getElementById("start-btn").addEventListener("click", function () { showScreen("write"); });
+  document.getElementById("again-btn").addEventListener("click", writeAgain);
+  sendBtn.addEventListener("click", send);
+  [orgInput, nameInput, messageInput].forEach(function (el) {
+    el.addEventListener("input", function () { saveDraft(); updateSendState(); });
+  });
+  /* Enter 입력 시 다음 칸으로 (모바일 키보드 '다음' 대응) */
+  [orgInput, nameInput].forEach(function (el) {
+    el.addEventListener("keydown", function (e) {
+      if (e.key !== "Enter") return;
+      e.preventDefault();
+      (el === orgInput ? nameInput : messageInput).focus();
+    });
+  });
+  // 쓰던 글이 있으면 인트로를 건너뛰고 바로 편지 쓰기 화면으로
+  (function () {
+    var d = storeGet(DRAFT_KEY, null);
+    if (d && d.message && d.message.trim()) showScreen("write");
+  })();
+
+  restoreDraft();
+  flushOutbox();
+</script>
+</body>
+</html>
